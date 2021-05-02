@@ -59,6 +59,7 @@ signals:
 	void in_audio_vol_changed(qreal);
 	void codec_gain_changed(qreal);
 	void send_dtmf(QByteArray);
+	void tx_clicked(bool);
 private:
     void init_gui();
     Ui::DudeStar *ui;
@@ -127,7 +128,7 @@ private:
 	int m_iaxport;
 	bool muted;
 	bool input_muted;
-	bool tx;
+	bool m_tx;
 	bool hwtx;
 	bool hwrx;
 	bool hw_ambe_present;
@@ -145,6 +146,7 @@ private slots:
 	void process_host_change(const QString &);
 	void swrx_state_changed(int);
 	void swtx_state_changed(int);
+	void click_tx();
 	void tts_changed(int);
 	void tts_text_changed(QString);
 	void tgid_text_changed(QString);

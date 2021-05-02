@@ -30,7 +30,7 @@ const unsigned char MMDVM_DSTAR_EOT    = 0x13U;
 REFCodec::REFCodec(QString callsign, QString hostname, char module, QString host, int port, bool ipv6, QString vocoder, QString modem, QString audioin, QString audioout) :
 	Codec(callsign, module, hostname, host, port, ipv6, vocoder, modem, audioin, audioout)
 {
-	m_txusrtxt = "Testing dudestar    ";
+	m_txusrtxt = "";
 }
 
 REFCodec::~REFCodec()
@@ -141,7 +141,7 @@ void REFCodec::process_udp()
 				//m_ping_timer->start(1000);
 			}
 			else if(buf.data()[7] == 0x4f){ //OKRO -- Go get registered!
-				m_modeinfo.status = CONNECTED_RO;
+				m_modeinfo.status = CONNECTED_RW;
 			}
 		}
 		else if((buf.data()[4] == 0x46) && (buf.data()[5] == 0x41) && (buf.data()[6] == 0x49) && (buf.data()[7] == 0x4c)){ // FAIL response

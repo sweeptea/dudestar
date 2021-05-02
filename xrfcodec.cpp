@@ -465,7 +465,7 @@ void XRFCodec::send_frame(uint8_t *ambe)
 			memcpy(txdata.data() + 26, m_txrptr1.toLocal8Bit().data(), 8);
 			memcpy(txdata.data() + 34, m_txurcall.toLocal8Bit().data(), 8);
 			memcpy(txdata.data() + 42, m_txmycall.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 50, "dude", 4);
+			memcpy(txdata.data() + 50, "DUDE", 4);
 			CCRC::addCCITT161((uint8_t *)txdata.data() + 15, 41);
 
 			m_modeinfo.src = m_txmycall;

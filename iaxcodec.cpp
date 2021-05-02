@@ -756,6 +756,12 @@ void IAXCodec::process_rx_data()
 	else return;
 }
 
+void IAXCodec::toggle_tx(bool tx)
+{
+	qDebug() << "IAXCodec::toggle_tx(bool tx) == " << tx;
+	tx ? start_tx() : stop_tx();
+}
+
 void IAXCodec::start_tx()
 {
 	//std::cerr << "Pressed TX buffersize == " << audioin->bufferSize() << std::endl;

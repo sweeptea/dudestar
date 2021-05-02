@@ -113,6 +113,7 @@ protected slots:
 	void input_src_changed(int id, QString t) { m_ttsid = id; m_ttstext = t; }
 	void start_tx();
 	void stop_tx();
+	void toggle_tx(bool);
 	void deleteLater();
 	void in_audio_vol_changed(qreal);
 	void out_audio_vol_changed(qreal);

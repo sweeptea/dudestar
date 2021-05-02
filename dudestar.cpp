@@ -67,20 +67,12 @@ DudeStar::DudeStar(QWidget *parent) :
 	m_dmrcc(1),
 	m_dmrslot(2),
 	m_dmrcalltype(0),
+	m_tx(false),
 	m_outlevel(0),
 	m_rxcnt(0)
 {
 	qRegisterMetaType<Codec::MODEINFO>("Codec::MODEINFO");
 	m_settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "dudestar", this);
-	//m_reflocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "REFLocal", this);
-	//m_dcslocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "DCSLocal", this);
-	//m_xrflocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "XRFLocal", this);
-	//m_dmrlocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "DMRLocal", this);
-	//m_ysflocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "YSFLocal", this);
-	//m_p25localhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "P25Local", this);
-	//m_nxdnlocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "NXDNLocal", this);
-	//m_m17localhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "M17Local", this);
-	//m_iaxlocalhosts = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "IAXLocal", this);
 	muted = false;
 	config_path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
 #ifndef Q_OS_WIN
@@ -177,6 +169,7 @@ void DudeStar::init_gui()
 	connect(ui->pushUpdateHostFiles, SIGNAL(clicked()), this, SLOT(update_host_files()));
 	connect(ui->pushUpdateDMRIDs, SIGNAL(clicked()), this, SLOT(update_dmr_ids()));
 	connect(ui->pushIAXDTMF, SIGNAL(clicked()), this, SLOT(process_dtmf()));
+	connect(ui->pushTX, SIGNAL(clicked()), this, SLOT(click_tx()));
 	ui->data1->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data2->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data3->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -257,6 +250,7 @@ void DudeStar::init_gui()
 void DudeStar::update_ui()
 {
 	static uint8_t cnt = 0;
+	static uint32_t txcnt = 0;
 	static uint64_t last_rxcnt = 0;
 	static uint16_t max = 0;
 
@@ -293,6 +287,19 @@ void DudeStar::update_ui()
 		}
 		m_labeldb->setText(QString::asprintf("%02.2f", db));//QString("  %1").arg(db, 1, 'g', 2));
 	}
+
+	if(m_tx){
+		if ((txcnt / 100) >= ui->editTXTimeout->text().simplified().toUInt()){
+			txcnt = 0;
+			click_tx();
+		}
+		else{
+			++txcnt;
+		}
+	}
+	else{
+		txcnt = 0;
+	}
 }
 
 void DudeStar::save_settings()
@@ -314,7 +321,8 @@ void DudeStar::save_settings()
 	m_settings->setValue("CALLSIGN", ui->editCallsign->text());
 	m_settings->setValue("DMRID", ui->editDMRID->text());
 	m_settings->setValue("ESSID", ui->comboESSID->currentText());
-	m_settings->setValue("DMRPASSWORD", ui->editPassword->text());
+	m_settings->setValue("BMPASSWORD", ui->editBMPassword->text());
+	m_settings->setValue("TGIFPASSWORD", ui->editTGIFPassword->text());
 	m_settings->setValue("DMRTGID", ui->editTG->text());
 	m_settings->setValue("DMRLAT", ui->editLat->text());
 	m_settings->setValue("DMRLONG", ui->editLong->text());
@@ -329,6 +337,7 @@ void DudeStar::save_settings()
 	m_settings->setValue("URCALL", ui->editURCALL->text().simplified());
 	m_settings->setValue("RPTR1", ui->editRPTR1->text().simplified());
 	m_settings->setValue("RPTR2", ui->editRPTR2->text().simplified());
+	m_settings->setValue("TXTIMEOUT", ui->editTXTimeout->text().simplified());
 	m_settings->setValue("XRF2REF", ui->checkXrf2Ref->isChecked() ? "true" : "false");
 	m_settings->setValue("USRTXT", ui->editUserTxt->text());
 	m_settings->setValue("IAXUSER", ui->editIAXUsername->text());
@@ -453,7 +462,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(true);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -482,7 +492,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(true);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -511,7 +522,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(true);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -540,7 +552,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -569,7 +582,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -598,7 +612,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(true);
+		ui->editBMPassword->setEnabled(true);
+		ui->editTGIFPassword->setEnabled(true);
 		ui->editTG->setEnabled(true);
 		ui->comboCC->setEnabled(true);
 		ui->comboSlot->setEnabled(true);
@@ -627,7 +642,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(true);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -656,6 +672,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -684,6 +702,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(true);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(true);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -712,6 +732,8 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->comboModule->setEnabled(false);
 		ui->editDMRID->setEnabled(true);
 		ui->comboESSID->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->editTG->setEnabled(false);
 		ui->comboCC->setEnabled(false);
 		ui->comboSlot->setEnabled(false);
@@ -735,6 +757,18 @@ void DudeStar::process_mode_change(const QString &m)
 		ui->label5->setText("");
 		ui->label6->setText("");
 	}
+}
+
+void DudeStar::click_tx()
+{
+	m_tx = !m_tx;
+	if(m_tx){
+		ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(180, 0, 0); color: rgb(0,0,0); }");
+	}
+	else{
+		ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(128, 195, 66); color: rgb(0,0,0); }");
+	}
+	emit tx_clicked(m_tx);
 }
 
 void DudeStar::tts_changed(int b)
@@ -1356,7 +1390,8 @@ void DudeStar::process_settings()
 		ui->comboESSID->setCurrentIndex(m_settings->value("ESSID").toString().simplified().toInt() + 1);
 	}
 
-	ui->editPassword->setText(m_settings->value("DMRPASSWORD").toString().simplified());
+	ui->editBMPassword->setText(m_settings->value("BMPASSWORD").toString().simplified());
+	ui->editTGIFPassword->setText(m_settings->value("TGIFPASSWORD").toString().simplified());
 	ui->editTG->setText(m_settings->value("DMRTGID", "4000").toString().simplified());
 	ui->editLat->setText(m_settings->value("DMRLAT", "0").toString().simplified());
 	ui->editLong->setText(m_settings->value("DMRLONG", "0").toString().simplified());
@@ -1371,6 +1406,7 @@ void DudeStar::process_settings()
 	ui->editURCALL->setText(m_settings->value("URCALL").toString().simplified());
 	ui->editRPTR1->setText(m_settings->value("RPTR1").toString().simplified());
 	ui->editRPTR2->setText(m_settings->value("RPTR2").toString().simplified());
+	ui->editTXTimeout->setText(m_settings->value("TXTIMEOUT", "300").toString().simplified());
 	ui->editUserTxt->setText(m_settings->value("USRTXT").toString().simplified());
 	(m_settings->value("XRF2REF").toString().simplified() == "true") ? ui->checkXrf2Ref->setChecked(true) : ui->checkXrf2Ref->setChecked(false);
 	ui->editIAXUsername->setText(m_settings->value("IAXUSER").toString().simplified());
@@ -1453,7 +1489,8 @@ void DudeStar::process_connect()
 		if(m_protocol == "DMR"){
 			ui->editDMRID->setEnabled(true);
 			ui->comboESSID->setEnabled(true);
-			ui->editPassword->setEnabled(true);
+			ui->editBMPassword->setEnabled(true);
+			ui->editTGIFPassword->setEnabled(true);
 		}
 
 		if( (m_protocol == "P25") || (m_protocol == "NXDN") ){
@@ -1558,8 +1595,7 @@ void DudeStar::process_connect()
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_ref, SLOT(rptr2_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_ref, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_ref, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_ref, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_ref, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_ref, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_ref, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_ref, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_ref, SLOT(decoder_gain_changed(qreal)));
@@ -1590,8 +1626,7 @@ void DudeStar::process_connect()
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_dcs, SLOT(rptr2_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_dcs, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_dcs, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_dcs, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_dcs, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_dcs, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_dcs, SLOT(decoder_gain_changed(qreal)));
@@ -1621,8 +1656,7 @@ void DudeStar::process_connect()
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_xrf, SLOT(rptr2_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_xrf, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_xrf, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_xrf, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_xrf, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_xrf, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_xrf, SLOT(decoder_gain_changed(qreal)));
@@ -1649,8 +1683,7 @@ void DudeStar::process_connect()
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_ysf, SLOT(input_src_changed(int, QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_ysf, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_ysf, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_ysf, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_ysf, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_ysf, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_ysf, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_ysf, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_ysf, SLOT(decoder_gain_changed(qreal)));
@@ -1658,8 +1691,23 @@ void DudeStar::process_connect()
 			m_modethread->start();
 		}
 		if(m_protocol == "DMR"){
+			QString bm_password = ui->editBMPassword->text().simplified();
+			QString tgif_password = ui->editTGIFPassword->text().simplified();
 			dmrid = ui->editDMRID->text().toUInt();
-			dmr_password = (ui->editPassword->text().isEmpty()) ? sl.at(2).simplified() : ui->editPassword->text();
+			dmr_password = sl.at(2).simplified();
+
+			if((hostname.size() > 2) && (hostname.left(2) == "BM")){
+				if(!bm_password.isEmpty()){
+					dmr_password = bm_password;
+				}
+			}
+
+			if((hostname.size() > 4) && (hostname.left(4) == "TGIF")){
+				if(!tgif_password.isEmpty()){
+					dmr_password = tgif_password;
+				}
+			}
+
 			dmr_destid = ui->editTG->text().toUInt();
 			uint8_t essid = ui->comboESSID->currentIndex();
 			QString opts = (ui->checkDMROptions->isChecked()) ? ui->editDMROptions->text() : "";
@@ -1678,8 +1726,7 @@ void DudeStar::process_connect()
 			ui->checkPrivate->isChecked() ? emit ui->checkPrivate->stateChanged(2) : emit ui->checkPrivate->stateChanged(0);
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dmr, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_dmr, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_dmr, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_dmr, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_dmr, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_dmr, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_dmr, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_dmr, SLOT(decoder_gain_changed(qreal)));
@@ -1700,8 +1747,7 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(finished()), m_p25, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_p25, SLOT(input_src_changed(int, QString)));
 			connect(this, SIGNAL(dmr_tgid_changed(unsigned int)), m_p25, SLOT(dmr_tgid_changed(unsigned int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_p25, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_p25, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_p25, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_p25, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_p25, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_p25, SLOT(decoder_gain_changed(qreal)));
@@ -1722,8 +1768,7 @@ void DudeStar::process_connect()
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_nxdn, SLOT(input_src_changed(int, QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_nxdn, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_nxdn, SLOT(swtx_state_changed(int)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_nxdn, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_nxdn, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_nxdn, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_nxdn, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_nxdn, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_nxdn, SLOT(decoder_gain_changed(qreal)));
@@ -1741,8 +1786,7 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(started()), m_m17, SLOT(send_connect()));
 			connect(m_modethread, SIGNAL(finished()), m_m17, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_m17, SLOT(input_src_changed(int, QString)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_m17, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_m17, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_m17, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_m17, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_m17, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_m17, SLOT(decoder_gain_changed(qreal)));
@@ -1763,8 +1807,7 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(started()), m_iax, SLOT(send_connect()));
 			connect(m_modethread, SIGNAL(finished()), m_iax, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_iax, SLOT(input_src_changed(int, QString)));
-			connect(ui->pushTX, SIGNAL(pressed()), m_iax, SLOT(start_tx()));
-			connect(ui->pushTX, SIGNAL(released()), m_iax, SLOT(stop_tx()));
+			connect(this, SIGNAL(tx_clicked(bool)), m_iax, SLOT(toggle_tx(bool)));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_iax, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_iax, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_iax, SLOT(decoder_gain_changed(qreal)));
@@ -2147,7 +2190,8 @@ void DudeStar::update_dmr_data(Codec::MODEINFO info)
 		ui->editCallsign->setEnabled(false);
 		ui->editDMRID->setEnabled(false);
 		ui->comboESSID->setEnabled(false);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->pushTX->setDisabled(false);
 		//ui->editTG->setEnabled(false);
 		ui->checkSWRX->setChecked(!(m_dmr->get_hwrx()));
@@ -2211,7 +2255,8 @@ void DudeStar::update_ref_data(Codec::MODEINFO info)
 		ui->comboHost->setEnabled(false);
 		ui->editCallsign->setEnabled(false);
 		ui->editDMRID->setEnabled(false);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->pushTX->setDisabled(false);
 		//ui->editTG->setEnabled(false);
 		ui->checkSWRX->setChecked(!(m_ref->get_hwrx()));
@@ -2272,7 +2317,8 @@ void DudeStar::update_dcs_data(Codec::MODEINFO info)
 		ui->comboModule->setEnabled(false);
 		ui->editCallsign->setEnabled(false);
 		ui->editDMRID->setEnabled(false);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->pushTX->setDisabled(false);
 
 		ui->checkSWRX->setChecked(!(m_dcs->get_hwrx()));
@@ -2336,7 +2382,8 @@ void DudeStar::update_xrf_data(Codec::MODEINFO info)
 		ui->comboModule->setEnabled(false);
 		ui->editCallsign->setEnabled(false);
 		ui->editDMRID->setEnabled(false);
-		ui->editPassword->setEnabled(false);
+		ui->editBMPassword->setEnabled(false);
+		ui->editTGIFPassword->setEnabled(false);
 		ui->pushTX->setDisabled(false);
 		ui->checkSWRX->setChecked(!(m_xrf->get_hwrx()));
 		if(!(m_xrf->get_hwrx())){

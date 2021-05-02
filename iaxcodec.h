@@ -52,6 +52,7 @@ private slots:
 	void send_lag_response();
 	void send_ping();
 	void send_pong();
+	void toggle_tx(bool);
 	void start_tx();
 	void stop_tx();
 	void transmit();
