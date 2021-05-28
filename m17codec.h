@@ -40,6 +40,7 @@ private slots:
 	void send_ping();
 	void send_disconnect();
 	void decoder_gain_changed(qreal);
+	void toggle_tx(bool);
 	void start_tx();
 	void transmit();
 	void hostname_lookup(QHostInfo i);

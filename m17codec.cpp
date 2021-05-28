@@ -295,6 +295,11 @@ void M17Codec::send_disconnect()
 #endif
 }
 
+void M17Codec::toggle_tx(bool tx)
+{
+	tx ? start_tx() : stop_tx();
+}
+
 void M17Codec::start_tx()
 {
 	m_c2->codec2_set_mode(m_txrate);
