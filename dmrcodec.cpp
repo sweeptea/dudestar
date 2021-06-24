@@ -62,8 +62,6 @@ DMRCodec::DMRCodec(QString callsign, uint32_t dmrid, uint8_t essid, QString pass
 	m_options(options)
 {
 	m_dmrcnt = 0;
-	m_colorcode = 1;
-	m_slot = 2;
 	m_flco = FLCO(0);
 
 	if (essid){

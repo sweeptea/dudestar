@@ -3,7 +3,7 @@ QT       += core gui network serialport multimedia
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 macx:LIBS += -framework AVFoundation
-macx: QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.14
+macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.14
 macx:QMAKE_INFO_PLIST = Info.plist
 
 TARGET = dudestar
@@ -13,7 +13,6 @@ VERSION_BUILD='$(shell cd $$PWD;git rev-parse --short HEAD)'
 DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += VERSION_NUMBER=\"\\\"$${VERSION_BUILD}\\\"\"
 #DEFINES += USE_FLITE
-DEFINES += USE_SWTX
 DEFINES += AMBEHW_SUPPORTED
 CONFIG += c++11
 

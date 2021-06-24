@@ -368,6 +368,11 @@ void XRFCodec::process_modem_data(QByteArray d)
 	send_frame(ambe);
 }
 
+void XRFCodec::toggle_tx(bool tx)
+{
+	tx ? start_tx() : stop_tx();
+}
+
 void XRFCodec::start_tx()
 {
 	format_callsign(m_txmycall);

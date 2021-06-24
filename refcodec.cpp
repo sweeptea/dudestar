@@ -30,7 +30,6 @@ const unsigned char MMDVM_DSTAR_EOT    = 0x13U;
 REFCodec::REFCodec(QString callsign, QString hostname, char module, QString host, int port, bool ipv6, QString vocoder, QString modem, QString audioin, QString audioout) :
 	Codec(callsign, module, hostname, host, port, ipv6, vocoder, modem, audioin, audioout)
 {
-	m_txusrtxt = "";
 }
 
 REFCodec::~REFCodec()
@@ -410,9 +409,13 @@ void REFCodec::process_modem_data(QByteArray d)
 	send_frame(ambe);
 }
 
+void REFCodec::toggle_tx(bool tx)
+{
+	tx ? start_tx() : stop_tx();
+}
+
 void REFCodec::start_tx()
 {
-	qDebug() << "start_tx() m_txrptr1 = " << m_txrptr1;
 	format_callsign(m_txmycall);
 	format_callsign(m_txurcall);
 	format_callsign(m_txrptr1);

@@ -97,14 +97,11 @@ void Codec::send_connect()
 
 void Codec::toggle_tx(bool tx)
 {
-	qDebug() << "Codec::toggle_tx(bool tx) == " << tx;
 	tx ? start_tx() : stop_tx();
 }
 
 void Codec::start_tx()
 {
-	//std::cerr << "Pressed TX buffersize == " << audioin->bufferSize() << std::endl;
-	qDebug() << "start_tx() " << m_ttsid << " " << m_ttstext;
 	if(m_hwtx){
 		m_ambedev->clear_queue();
 	}

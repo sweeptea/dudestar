@@ -372,9 +372,13 @@ void DCSCodec::process_modem_data(QByteArray d)
 	send_frame(ambe);
 }
 
+void DCSCodec::toggle_tx(bool tx)
+{
+	tx ? start_tx() : stop_tx();
+}
+
 void DCSCodec::start_tx()
 {
-	qDebug() << "start_tx() m_txrptr1 = " << m_txrptr1;
 	format_callsign(m_txmycall);
 	format_callsign(m_txurcall);
 	format_callsign(m_txrptr1);

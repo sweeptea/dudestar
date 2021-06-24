@@ -35,6 +35,7 @@ private:
 	QString m_txusrtxt;
 	uint8_t packet_size;
 private slots:
+	void toggle_tx(bool);
 	void start_tx();
 	void format_callsign(QString &);
 	void process_udp();
@@ -52,6 +53,7 @@ private slots:
 	void urcall_changed(QString uc) { m_txurcall = uc; }
 	void rptr1_changed(QString r1) { m_txrptr1 = r1; }
 	void rptr2_changed(QString r2) { m_txrptr2 = r2; }
+	void usrtxt_changed(QString t) { m_txusrtxt = t; }
 	void swrx_state_changed(int s) {m_hwrx = !s; }
 	void swtx_state_changed(int s) {m_hwtx = !s; }
 	void send_frame(uint8_t *);

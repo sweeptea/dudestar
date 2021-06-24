@@ -89,6 +89,10 @@ DudeStar::DudeStar(QWidget *parent) :
 
 DudeStar::~DudeStar()
 {
+	if(connect_status == Codec::CONNECTED_RW){
+		process_connect();
+	}
+
 	save_settings();
 	delete ui;
 }
@@ -1593,6 +1597,7 @@ void DudeStar::process_connect()
 			connect(ui->editURCALL, SIGNAL(textChanged(QString)), m_ref, SLOT(urcall_changed(QString)));
 			connect(ui->editRPTR1, SIGNAL(textChanged(QString)), m_ref, SLOT(rptr1_changed(QString)));
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_ref, SLOT(rptr2_changed(QString)));
+			connect(ui->editUserTxt, SIGNAL(textChanged(QString)), m_ref, SLOT(usrtxt_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_ref, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_ref, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_ref, SLOT(toggle_tx(bool)));
@@ -1605,6 +1610,7 @@ void DudeStar::process_connect()
 			emit ui->editURCALL->textChanged(ui->editURCALL->text());
 			emit ui->editRPTR1->textChanged(ui->editRPTR1->text());
 			emit ui->editRPTR2->textChanged(ui->editRPTR2->text());
+			emit ui->editUserTxt->textChanged(ui->editUserTxt->text());
 			m_modethread->start();
 		}
 		if(m_protocol == "DCS"){
@@ -1624,6 +1630,7 @@ void DudeStar::process_connect()
 			connect(ui->editURCALL, SIGNAL(textChanged(QString)), m_dcs, SLOT(urcall_changed(QString)));
 			connect(ui->editRPTR1, SIGNAL(textChanged(QString)), m_dcs, SLOT(rptr1_changed(QString)));
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_dcs, SLOT(rptr2_changed(QString)));
+			connect(ui->editUserTxt, SIGNAL(textChanged(QString)), m_dcs, SLOT(usrtxt_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_dcs, SLOT(toggle_tx(bool)));
@@ -1636,6 +1643,7 @@ void DudeStar::process_connect()
 			emit ui->editURCALL->textChanged(ui->editURCALL->text());
 			emit ui->editRPTR1->textChanged(ui->editRPTR1->text());
 			emit ui->editRPTR2->textChanged(ui->editRPTR2->text());
+			emit ui->editUserTxt->textChanged(ui->editUserTxt->text());
 			m_modethread->start();
 		}
 		if( (m_protocol == "XRF") && (ui->checkXrf2Ref->isChecked() == false) ){
@@ -1654,6 +1662,7 @@ void DudeStar::process_connect()
 			connect(ui->editURCALL, SIGNAL(textChanged(QString)), m_xrf, SLOT(urcall_changed(QString)));
 			connect(ui->editRPTR1, SIGNAL(textChanged(QString)), m_xrf, SLOT(rptr1_changed(QString)));
 			connect(ui->editRPTR2, SIGNAL(textChanged(QString)), m_xrf, SLOT(rptr2_changed(QString)));
+			connect(ui->editUserTxt, SIGNAL(textChanged(QString)), m_xrf, SLOT(usrtxt_changed(QString)));
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_xrf, SLOT(toggle_tx(bool)));
@@ -1666,6 +1675,7 @@ void DudeStar::process_connect()
 			emit ui->editURCALL->textChanged(ui->editURCALL->text());
 			emit ui->editRPTR1->textChanged(ui->editRPTR1->text());
 			emit ui->editRPTR2->textChanged(ui->editRPTR2->text());
+			emit ui->editUserTxt->textChanged(ui->editUserTxt->text());
 			m_modethread->start();
 		}
 		if( (m_protocol == "YSF") || (m_protocol == "FCS") ){
@@ -1722,6 +1732,8 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(finished()), m_dmr, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_dmr, SLOT(input_src_changed(int, QString)));
 			connect(this, SIGNAL(dmr_tgid_changed(unsigned int)), m_dmr, SLOT(dmr_tgid_changed(unsigned int)));
+			connect(ui->comboCC, SIGNAL(currentIndexChanged(int)), m_dmr, SLOT(dmr_cc_changed(int)));
+			connect(ui->comboSlot, SIGNAL(currentIndexChanged(int)), m_dmr, SLOT(dmr_slot_changed(int)));
 			connect(ui->checkPrivate, SIGNAL(stateChanged(int)), m_dmr, SLOT(dmrpc_state_changed(int)));
 			ui->checkPrivate->isChecked() ? emit ui->checkPrivate->stateChanged(2) : emit ui->checkPrivate->stateChanged(0);
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dmr, SLOT(swrx_state_changed(int)));
@@ -1731,6 +1743,8 @@ void DudeStar::process_connect()
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_dmr, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_dmr, SLOT(decoder_gain_changed(qreal)));
 			emit input_source_changed(tts_voices->checkedId(), ui->editTTSTXT->text());
+			emit ui->comboCC->currentIndexChanged(ui->comboCC->currentIndex());
+			emit ui->comboSlot->currentIndexChanged(ui->comboSlot->currentIndex());
 			m_modethread->start();
 		}
 		if(m_protocol == "P25"){
@@ -2151,13 +2165,13 @@ void DudeStar::update_p25_data(Codec::MODEINFO info)
 	}
 	QString t = QDateTime::fromMSecsSinceEpoch(info.ts).toString("yyyy.MM.dd hh:mm:ss.zzz");
 	if(info.stream_state == Codec::STREAM_NEW){
-		ui->textLog->append(t + " DMR RX started src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
+		ui->textLog->append(t + " P25 RX started src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
 	}
 	if(info.stream_state == Codec::STREAM_END){
-		ui->textLog->append(t + " DMR RX ended src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
+		ui->textLog->append(t + " P25 RX ended src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
 	}
 	if(info.stream_state == Codec::STREAM_LOST){
-		ui->textLog->append(t + " DMR RX lost src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
+		ui->textLog->append(t + " P25 RX lost src: " + QString::number(info.srcid) + " dst: " + QString::number(info.dstid));
 	}
 	++m_rxcnt;
 }

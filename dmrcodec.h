@@ -45,6 +45,8 @@ private slots:
 	void transmit();
 	void hostname_lookup(QHostInfo i);
 	void dmr_tgid_changed(unsigned int id) { m_txdstid = id; }
+	void dmr_cc_changed(int cc) {m_colorcode = cc + 1; }
+	void dmr_slot_changed(int s) {m_slot = s + 1; }
 	void dmrpc_state_changed(int pc){ m_pc = (pc ? true : false); }
 	void swrx_state_changed(int s) {m_hwrx = !s; }
 	void swtx_state_changed(int s) {m_hwtx = !s; }

@@ -271,7 +271,6 @@ void M17Codec::send_ping()
 
 void M17Codec::send_disconnect()
 {
-	qDebug() << "send_disconnect()";
 	QByteArray out;
 	uint8_t cs[10];
 	memset(cs, ' ', 9);

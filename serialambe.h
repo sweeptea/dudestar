@@ -47,6 +47,10 @@ private:
 	uint8_t packet_size;
 	qreal m_decode_gain;
 	QQueue<char> m_serialdata;
+	void decode_2020(uint8_t *);
+	void encode_2020(int16_t *);
+	void decode_3000(uint8_t *);
+	void encode_3000(int16_t *);
 signals:
 	void data_ready();
 };
