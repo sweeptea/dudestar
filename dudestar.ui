@@ -448,7 +448,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>344</width>
+             <width>372</width>
              <height>1383</height>
             </rect>
            </property>
@@ -1218,6 +1218,13 @@
             </item>
             <item row="10" column="1" colspan="3">
              <widget class="QLineEdit" name="editTGIFPassword"/>
+            </item>
+            <item row="6" column="2">
+             <widget class="QCheckBox" name="checkToggleTX">
+              <property name="text">
+               <string>Enable TX toggle</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>

@@ -174,6 +174,8 @@ void DudeStar::init_gui()
 	connect(ui->pushUpdateDMRIDs, SIGNAL(clicked()), this, SLOT(update_dmr_ids()));
 	connect(ui->pushIAXDTMF, SIGNAL(clicked()), this, SLOT(process_dtmf()));
 	connect(ui->pushTX, SIGNAL(clicked()), this, SLOT(click_tx()));
+	connect(ui->pushTX, SIGNAL(pressed()), this, SLOT(press_tx()));
+	connect(ui->pushTX, SIGNAL(released()), this, SLOT(release_tx()));
 	ui->data1->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data2->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data3->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -342,6 +344,7 @@ void DudeStar::save_settings()
 	m_settings->setValue("RPTR1", ui->editRPTR1->text().simplified());
 	m_settings->setValue("RPTR2", ui->editRPTR2->text().simplified());
 	m_settings->setValue("TXTIMEOUT", ui->editTXTimeout->text().simplified());
+	m_settings->setValue("TOGGLETX", ui->checkToggleTX->isChecked() ? "true" : "false");
 	m_settings->setValue("XRF2REF", ui->checkXrf2Ref->isChecked() ? "true" : "false");
 	m_settings->setValue("USRTXT", ui->editUserTxt->text());
 	m_settings->setValue("IAXUSER", ui->editIAXUsername->text());
@@ -765,14 +768,31 @@ void DudeStar::process_mode_change(const QString &m)
 
 void DudeStar::click_tx()
 {
-	m_tx = !m_tx;
-	if(m_tx){
-		ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(180, 0, 0); color: rgb(0,0,0); }");
+	if(ui->checkToggleTX->isChecked()){
+		m_tx = !m_tx;
+		if(m_tx){
+			ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(180, 0, 0); color: rgb(0,0,0); }");
+		}
+		else{
+			//ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(128, 195, 66); color: rgb(0,0,0); }");
+			ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(128, 195, 66); color: rgb(0,0,0); } QPushButton:pressed { background-color: rgb(180, 0, 0); color: rgb(0,0,0); }");
+		}
+		emit tx_clicked(m_tx);
 	}
-	else{
-		ui->pushTX->setStyleSheet("QPushButton:enabled { background-color: rgb(128, 195, 66); color: rgb(0,0,0); }");
+}
+
+void DudeStar::press_tx()
+{
+	if(!ui->checkToggleTX->isChecked()){
+		emit tx_pressed();
 	}
-	emit tx_clicked(m_tx);
+}
+
+void DudeStar::release_tx()
+{
+	if(!ui->checkToggleTX->isChecked()){
+		emit tx_released();
+	}
 }
 
 void DudeStar::tts_changed(int b)
@@ -1411,6 +1431,7 @@ void DudeStar::process_settings()
 	ui->editRPTR1->setText(m_settings->value("RPTR1").toString().simplified());
 	ui->editRPTR2->setText(m_settings->value("RPTR2").toString().simplified());
 	ui->editTXTimeout->setText(m_settings->value("TXTIMEOUT", "300").toString().simplified());
+	(m_settings->value("TOGGLETX").toString().simplified() == "true") ? ui->checkToggleTX->setChecked(true) : ui->checkToggleTX->setChecked(false);
 	ui->editUserTxt->setText(m_settings->value("USRTXT").toString().simplified());
 	(m_settings->value("XRF2REF").toString().simplified() == "true") ? ui->checkXrf2Ref->setChecked(true) : ui->checkXrf2Ref->setChecked(false);
 	ui->editIAXUsername->setText(m_settings->value("IAXUSER").toString().simplified());
@@ -1601,6 +1622,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_ref, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_ref, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_ref, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_ref, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_ref, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_ref, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_ref, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_ref, SLOT(decoder_gain_changed(qreal)));
@@ -1634,6 +1657,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_dcs, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_dcs, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_dcs, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_dcs, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_dcs, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_dcs, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_dcs, SLOT(decoder_gain_changed(qreal)));
@@ -1666,6 +1691,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_xrf, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_xrf, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_xrf, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_xrf, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_xrf, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_xrf, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_xrf, SLOT(decoder_gain_changed(qreal)));
@@ -1694,6 +1721,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_ysf, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_ysf, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_ysf, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_ysf, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_ysf, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_ysf, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_ysf, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_ysf, SLOT(decoder_gain_changed(qreal)));
@@ -1739,6 +1768,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_dmr, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_dmr, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_dmr, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_dmr, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_dmr, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_dmr, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_dmr, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_dmr, SLOT(decoder_gain_changed(qreal)));
@@ -1762,6 +1793,8 @@ void DudeStar::process_connect()
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_p25, SLOT(input_src_changed(int, QString)));
 			connect(this, SIGNAL(dmr_tgid_changed(unsigned int)), m_p25, SLOT(dmr_tgid_changed(unsigned int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_p25, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_p25, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_p25, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_p25, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_p25, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_p25, SLOT(decoder_gain_changed(qreal)));
@@ -1783,6 +1816,8 @@ void DudeStar::process_connect()
 			connect(ui->checkSWRX, SIGNAL(stateChanged(int)), m_nxdn, SLOT(swrx_state_changed(int)));
 			connect(ui->checkSWTX, SIGNAL(stateChanged(int)), m_nxdn, SLOT(swtx_state_changed(int)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_nxdn, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_nxdn, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_nxdn, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_nxdn, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_nxdn, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_nxdn, SLOT(decoder_gain_changed(qreal)));
@@ -1801,6 +1836,8 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(finished()), m_m17, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_m17, SLOT(input_src_changed(int, QString)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_m17, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_m17, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_m17, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_m17, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_m17, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_m17, SLOT(decoder_gain_changed(qreal)));
@@ -1822,6 +1859,8 @@ void DudeStar::process_connect()
 			connect(m_modethread, SIGNAL(finished()), m_iax, SLOT(deleteLater()));
 			connect(this, SIGNAL(input_source_changed(int, QString)), m_iax, SLOT(input_src_changed(int, QString)));
 			connect(this, SIGNAL(tx_clicked(bool)), m_iax, SLOT(toggle_tx(bool)));
+			connect(this, SIGNAL(tx_pressed()), m_iax, SLOT(start_tx()));
+			connect(this, SIGNAL(tx_released()), m_iax, SLOT(stop_tx()));
 			connect(this, SIGNAL(out_audio_vol_changed(qreal)), m_iax, SLOT(out_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(in_audio_vol_changed(qreal)), m_iax, SLOT(in_audio_vol_changed(qreal)));
 			connect(this, SIGNAL(codec_gain_changed(qreal)), m_iax, SLOT(decoder_gain_changed(qreal)));

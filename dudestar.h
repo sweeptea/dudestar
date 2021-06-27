@@ -60,6 +60,8 @@ signals:
 	void codec_gain_changed(qreal);
 	void send_dtmf(QByteArray);
 	void tx_clicked(bool);
+	void tx_pressed();
+	void tx_released();
 private:
     void init_gui();
     Ui::DudeStar *ui;
@@ -147,6 +149,8 @@ private slots:
 	void swrx_state_changed(int);
 	void swtx_state_changed(int);
 	void click_tx();
+	void press_tx();
+	void release_tx();
 	void tts_changed(int);
 	void tts_text_changed(QString);
 	void tgid_text_changed(QString);
