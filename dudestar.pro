@@ -15,7 +15,7 @@ DEFINES += VERSION_NUMBER=\"\\\"$${VERSION_BUILD}\\\"\"
 #DEFINES += USE_FLITE
 DEFINES += AMBEHW_SUPPORTED
 CONFIG += c++11
-
+#CONFIG += debug
 SOURCES += \
         CRCenc.cpp \
         DMRData.cpp \
