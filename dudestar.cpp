@@ -74,6 +74,7 @@ DudeStar::DudeStar(QWidget *parent) :
 	qRegisterMetaType<Codec::MODEINFO>("Codec::MODEINFO");
 	m_settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "dudetronics", "dudestar", this);
 	muted = false;
+	input_muted = false;
 	config_path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
 #ifndef Q_OS_WIN
 	config_path += "/dudetronics";
@@ -176,33 +177,24 @@ void DudeStar::init_gui()
 	connect(ui->pushTX, SIGNAL(clicked()), this, SLOT(click_tx()));
 	connect(ui->pushTX, SIGNAL(pressed()), this, SLOT(press_tx()));
 	connect(ui->pushTX, SIGNAL(released()), this, SLOT(release_tx()));
+	connect(ui->textCustomHosts, SIGNAL(textChanged()), this, SLOT(update_custom_hosts()));
 	ui->data1->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data2->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data3->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data4->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data5->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	ui->data6->setTextInteractionFlags(Qt::TextSelectableByMouse);
-	ui->comboMode->addItem("REF");
-	ui->comboMode->addItem("DCS");
-	ui->comboMode->addItem("XRF");
+
+	ui->comboMode->addItem("M17");
 	ui->comboMode->addItem("YSF");
 	ui->comboMode->addItem("FCS");
 	ui->comboMode->addItem("DMR");
 	ui->comboMode->addItem("P25");
 	ui->comboMode->addItem("NXDN");
-	ui->comboMode->addItem("M17");
+	ui->comboMode->addItem("REF");
+	ui->comboMode->addItem("DCS");
+	ui->comboMode->addItem("XRF");
 	ui->comboMode->addItem("IAX");
-
-	ui->comboCustomHostMode->addItem("REF");
-	ui->comboCustomHostMode->addItem("DCS");
-	ui->comboCustomHostMode->addItem("XRF");
-	ui->comboCustomHostMode->addItem("YSF");
-	ui->comboCustomHostMode->addItem("FCS");
-	ui->comboCustomHostMode->addItem("DMR");
-	ui->comboCustomHostMode->addItem("P25");
-	ui->comboCustomHostMode->addItem("NXDN");
-	ui->comboCustomHostMode->addItem("M17");
-	ui->comboCustomHostMode->addItem("IAX");
 
 	for(uint8_t cc = 1; cc < 8; ++cc){
 		ui->comboCC->addItem(QString::number(cc));
@@ -847,11 +839,14 @@ void DudeStar::process_ref_hosts()
 {
 	QMap<QString, QString> hostmap;
 	QFileInfo check_file(config_path + "/dplus.txt");
+
 	if(check_file.exists() && check_file.isFile()){
 		ui->comboHost->blockSignals(true);
 		QFile f(config_path + "/dplus.txt");
+
 		if(f.open(QIODevice::ReadOnly)){
 			ui->comboHost->clear();
+
 			while(!f.atEnd()){
 				QString l = f.readLine();
 				if(l.at(0) == '#'){
@@ -862,6 +857,17 @@ void DudeStar::process_ref_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(1) + ",20001";
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "REF"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -897,6 +903,17 @@ void DudeStar::process_dcs_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(1) + ",30051";
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "DCS"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -932,6 +949,17 @@ void DudeStar::process_xrf_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(1) + ",30001";
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "XRF"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -967,6 +995,17 @@ void DudeStar::process_ysf_hosts()
 					hostmap[ll.at(1).simplified() + " - " + ll.at(2).simplified()] = ll.at(3) + "," + ll.at(4);
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "YSF"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1002,6 +1041,17 @@ void DudeStar::process_fcs_rooms()
 					hostmap[ll.at(0).simplified() + " - " + ll.at(1).simplified()] = ll.at(2).left(6).toLower() + ".xreflector.net,62500";
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "FCS"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1042,6 +1092,17 @@ void DudeStar::process_dmr_hosts()
 					}
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "REF"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified() + "," + line.at(4).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1077,6 +1138,17 @@ void DudeStar::process_p25_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(1) + "," + ll.at(2);
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "P25"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1112,6 +1184,17 @@ void DudeStar::process_nxdn_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(1) + "," + ll.at(2);
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "NXDN"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1147,6 +1230,17 @@ void DudeStar::process_m17_hosts()
 					hostmap[ll.at(0).simplified()] = ll.at(2) + "," + ll.at(4) + "," + ll.at(3);
 				}
 			}
+
+			QStringList customhosts = ui->textCustomHosts->toPlainText().split('\n');
+			for (const auto& i : customhosts){
+				qDebug() << i;
+				QStringList line = i.simplified().split(' ');
+
+				if(line.at(0) == "M17"){
+					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified();
+				}
+			}
+
 			QMap<QString, QString>::const_iterator i = hostmap.constBegin();
 			while (i != hostmap.constEnd()) {
 				ui->comboHost->addItem(i.key(), i.value());
@@ -1320,31 +1414,31 @@ void DudeStar::process_settings()
 	process_mode_change(m_settings->value("MODE").toString().simplified());
 
 	if(i == 0){
-		process_ref_hosts();
+		process_m17_hosts();
 	}
 	else if(i == 1){
-		process_dcs_hosts();
-	}
-	else if(i == 2){
-		process_xrf_hosts();
-	}
-	else if(i == 3){
 		process_ysf_hosts();
 	}
-	else if(i == 4){
+	else if(i == 2){
 		process_fcs_rooms();
 	}
-	else if(i == 5){
+	else if(i == 3){
 		process_dmr_hosts();
 	}
-	else if(i == 6){
+	else if(i == 4){
 		process_p25_hosts();
 	}
-	else if(i == 7){
+	else if(i == 5){
 		process_nxdn_hosts();
 	}
+	else if(i == 6){
+		process_ref_hosts();
+	}
+	else if(i == 7){
+		process_dcs_hosts();
+	}
 	else if(i == 8){
-		process_m17_hosts();
+		process_xrf_hosts();
 	}
 	ui->comboMode->blockSignals(false);
 	ui->comboHost->blockSignals(true);
@@ -1439,6 +1533,7 @@ void DudeStar::process_settings()
 	ui->editIAXNode->setText(m_settings->value("IAXNODE").toString().simplified());
 	ui->editIAXHost->setText(m_settings->value("IAXHOST").toString().simplified());
 	ui->editIAXPort->setText(m_settings->value("IAXPORT", "4569").toString().simplified());
+	ui->textCustomHosts->setText(m_settings->value("LOCALHOSTS").toString());
 
 	ui->editModemRxFreq->setText(m_settings->value("ModemRxFreq", "438800000").toString().simplified());
 	ui->editModemTxFreq->setText(m_settings->value("ModemTxFreq", "438800000").toString().simplified());
@@ -1460,6 +1555,13 @@ void DudeStar::process_settings()
 	(m_settings->value("ModemRxInvert", "false").toString().simplified() == "true") ? ui->checkModemRxInvert->setChecked(true) : ui->checkModemRxInvert->setChecked(false);
 	(m_settings->value("ModemPTTInvert", "false").toString().simplified() == "true") ? ui->checkModemPTTInvert->setChecked(true) : ui->checkModemPTTInvert->setChecked(false);
 	ui->comboHost->blockSignals(false);
+}
+
+void DudeStar::update_custom_hosts()
+{
+	QString h = ui->textCustomHosts->toPlainText();
+	m_settings->setValue("LOCALHOSTS", h);
+	qDebug() << "update_custom_hosts " << h;
 }
 
 void DudeStar::discover_vocoders()
@@ -1889,14 +1991,24 @@ void DudeStar::process_volume_changed(int v)
 
 void DudeStar::process_mute_button()
 {
+	static int last_v;
 	int v = ui->sliderVolume->value();
-	qreal linear_vol = QAudio::convertVolume(v / qreal(100.0),QAudio::LogarithmicVolumeScale,QAudio::LinearVolumeScale);
+	qreal linear_vol;
+
 	if(muted){
 		muted = false;
+		ui->pushVolMute->setText("Mute");
+		ui->sliderVolume->setEnabled(true);
+		ui->sliderVolume->setValue(last_v);
+		linear_vol = QAudio::convertVolume(last_v / qreal(100.0),QAudio::LogarithmicVolumeScale,QAudio::LinearVolumeScale);
 		emit out_audio_vol_changed(linear_vol);
 	}
 	else{
 		muted = true;
+		last_v = v;
+		ui->pushVolMute->setText("UnMute");
+		ui->sliderVolume->setEnabled(false);
+		ui->sliderVolume->setValue(0);
 		emit out_audio_vol_changed(0.0);
 	}
 }
@@ -1911,15 +2023,25 @@ void DudeStar::process_mic_gain_changed(int v)
 
 void DudeStar::process_mic_mute_button()
 {
+	static int last_v;
 	int v = ui->sliderMic->value();
-	qreal linear_vol = QAudio::convertVolume(v / qreal(100.0),QAudio::LogarithmicVolumeScale,QAudio::LinearVolumeScale);
+	qreal linear_vol;
+
 	if(input_muted){
 		input_muted = false;
+		ui->pushMicMute->setText("Mute");
+		ui->sliderMic->setEnabled(true);
+		ui->sliderMic->setValue(last_v);
+		linear_vol = QAudio::convertVolume(last_v / qreal(100.0),QAudio::LogarithmicVolumeScale,QAudio::LinearVolumeScale);
 		emit in_audio_vol_changed(linear_vol);
 	}
 	else{
 		input_muted = true;
-		emit in_audio_vol_changed(linear_vol);
+		last_v = v;
+		ui->pushMicMute->setText("UnMute");
+		ui->sliderMic->setEnabled(false);
+		ui->sliderMic->setValue(0);
+		emit in_audio_vol_changed(0.0);
 	}
 }
 

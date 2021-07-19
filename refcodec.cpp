@@ -518,7 +518,7 @@ void REFCodec::send_frame(uint8_t *ambe)
 			memcpy(txdata.data() + 28, m_txrptr1.toLocal8Bit().data(), 8);
 			memcpy(txdata.data() + 36, m_txurcall.toLocal8Bit().data(), 8);
 			memcpy(txdata.data() + 44, m_txmycall.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 52, "DUDE", 4);
+			memcpy(txdata.data() + 52, "AMBE", 4);
 			CCRC::addCCITT161((uint8_t *)txdata.data() + 17, 41);
 
 			m_modeinfo.src = m_txmycall;

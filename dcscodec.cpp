@@ -456,7 +456,7 @@ void DCSCodec::send_frame(uint8_t *ambe)
 		memcpy(txdata.data() + 15, m_txrptr1.toLocal8Bit().data(), 8);
 		memcpy(txdata.data() + 23, m_txurcall.toLocal8Bit().data(), 8);
 		memcpy(txdata.data() + 31, m_txmycall.toLocal8Bit().data(), 8);
-		memcpy(txdata.data() + 39, "DUDE", 4);
+		memcpy(txdata.data() + 39, "AMBE", 4);
 		memcpy(txdata.data() + 43, &txstreamid, 2);
 		txdata[45] = (m_txcnt % 21) & 0xff;
 		memcpy(txdata.data() + 46, ambe, 9);

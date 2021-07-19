@@ -140,7 +140,6 @@ private:
 	QButtonGroup *tts_voices;
 	uint16_t m_outlevel;
 	uint64_t m_rxcnt;
-	QStandardItemModel *m_customhosts;
 private slots:
 	void save_settings();
     void process_connect();
@@ -187,6 +186,7 @@ private slots:
 	void process_nxdn_ids();
 	void update_nxdn_ids();
     void process_settings();
+	void update_custom_hosts();
 	void download_file(QString);
 	void file_downloaded(QString);
 	void update_ui();

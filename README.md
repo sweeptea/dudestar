@@ -1,7 +1,7 @@
 # DUDE-Star
 Software to RX/TX D-STAR, DMR, Fusion YSF/FCS, NXDN, P25, M17, and IAX (AllStar client) over UDP
 
-This software connects to D-STAR, Fusion (DN and VW modes are supported), NXDN, P25, M17 reflectors and AllStar nodes (as an IAX2 client) over UDP.  It is compatible with all of the AMBE3000 based USB devices out there (ThumbDV, DVstick 30, DVSI, etc). It includes software decoding and encoding support, using experimental open source IMBE/AMBE vocoder software.  This software is open source and uses the cross platform C++ library called Qt.  It will build and run on Linux, Windows, and Mac OSX.
+This software connects to D-STAR, Fusion (DN and VW modes are supported), NXDN, P25, M17 reflectors and AllStar nodes (as an IAX2 client) over UDP.  It is compatible with all of the AMBE3000 based USB devices out there (ThumbDV, DVstick 30, DVSI, etc). It includes software decoding and encoding support, using experimental open source IMBE/AMBE vocoder software.  This software is open source and uses the cross platform C++ library called Qt.  It will build and run on Linux, Windows, and Mac OSX.  *Linux is the only officially supported platform.  I do my best to support MacOS as well, due to it's Unix-like feel. There is no support for Windows whatsoever, end of story!*
 
 This software makes use of software from a number of other open source software projects, including MMDVMHost, MMDVM_CM, XLXD, DSDcc, MBELIB, op25 (GNU Radio), mvoice, and others. Not only is software from these projects being used directly, but learning about the various network protocols and encoding/decoding of the various protocols was only possible thanks to the authors of all of these software projects.
 
@@ -62,6 +62,11 @@ sudo apt-get install pulseaudio
 ```
 My primary development platform is Fedora Linux.  With a proper build environment, the build instructions apply to all other platforms/distributions, including Windows and macOS.
 
-# Builds
-64 and 32 bit Windows builds are available from the releases section.  These are statically linked, stand-alone executables, no install required.  *NO support for Windows builds, either building or using.*
+# Information about Windows builds
+*NO support for Windows builds, either building or using.*
+
+*Linux is the only officially supported platform.  I do my best to support MacOS as well, due to it's Unix-like feel. There is no support for Windows whatsoever, end of story!*
+
+This github site is to host the source code for this project.  No releases have ever been posted for *any* platform.  The Windows builds that were hosted here were clearly described as 'courtesy builds' and nothing more.  Thanks to a few out there that refused to accept or understand that, there will no longer be any builds hosted on github.  In time, I will host Windows builds at a separate location.  These builds will always be low priority and completey unsupported.
+
 

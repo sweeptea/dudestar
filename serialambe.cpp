@@ -44,7 +44,6 @@ SerialAMBE::SerialAMBE(QString protocol) :
 	m_protocol(protocol),
 	m_decode_gain(1.0)
 {
-	//m_description = "DV Dongle";
 }
 
 SerialAMBE::~SerialAMBE()
